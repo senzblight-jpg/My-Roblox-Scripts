@@ -1,51 +1,65 @@
+-- [[ CONSOLE LOG ]]
+print("Delta: Script Loading...")
+
 -- [[ SETTINGS ]]
-local ButtonToClick = "Take" -- Change this if the button name in the game is different
-local _G.AutoTakeEnabled = false -- Default state is OFF
+local ButtonName = "Take" -- The exact name of the button in the game
+_G.AutoTakeEnabled = false
 
--- [[ CREATE THE TOGGLE UI ]]
-local ScreenGui = Instance.new("ScreenGui")
-local ToggleButton = Instance.new("TextButton")
+-- [[ CLEAN UP OLD UI ]]
+if game.Players.LocalPlayer.PlayerGui:FindFirstChild("DeltaAutoTake") then
+    game.Players.LocalPlayer.PlayerGui.DeltaAutoTake:Destroy()
+end
 
-ScreenGui.Parent = game.CoreGui -- Puts it in the hidden developer GUI folder
-ScreenGui.Name = "AutoTakeGui"
+-- [[ CREATE UI ]]
+local sg = Instance.new("ScreenGui")
+sg.Name = "DeltaAutoTake"
+sg.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+sg.ResetOnSpawn = false -- Keeps the button there when you die
 
-ToggleButton.Parent = ScreenGui
-ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50) -- Red initially
-ToggleButton.Position = UDim2.new(0, 50, 0, 50) -- Position on screen
-ToggleButton.Size = UDim2.new(0, 150, 0, 50)
-ToggleButton.Text = "Auto-Take: OFF"
-ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-ToggleButton.Draggable = true -- You can move it around
+local btn = Instance.new("TextButton")
+btn.Size = UDim2.new(0, 120, 0, 40)
+btn.Position = UDim2.new(0.5, -60, 0.1, 0) -- Top middle of your screen
+btn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+btn.Text = "Auto-Take: OFF"
+btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+btn.Parent = sg
+btn.Active = true
+btn.Draggable = true -- Allows you to move it if it's blocking your view
 
 -- [[ TOGGLE LOGIC ]]
-ToggleButton.MouseButton1Click:Connect(function()
+btn.MouseButton1Click:Connect(function()
     _G.AutoTakeEnabled = not _G.AutoTakeEnabled
-    
     if _G.AutoTakeEnabled then
-        ToggleButton.Text = "Auto-Take: ON"
-        ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 255, 50) -- Green
+        btn.Text = "Auto-Take: ON"
+        btn.BackgroundColor3 = Color3.fromRGB(60, 255, 60)
+        print("Auto-Take Enabled")
     else
-        ToggleButton.Text = "Auto-Take: OFF"
-        ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50) -- Red
+        btn.Text = "Auto-Take: OFF"
+        btn.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+        print("Auto-Take Disabled")
     end
 end)
 
--- [[ AUTOMATION LOOP ]]
+-- [[ SCANNER LOOP ]]
 task.spawn(function()
-    while task.wait(0.1) do
+    while task.wait(0.2) do -- Checks every 0.2s to save battery/performance
         if _G.AutoTakeEnabled then
-            local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-            -- Search for the "Take" button
-            for _, v in pairs(playerGui:GetDescendants()) do
-                if v:IsA("TextButton") and v.Name == ButtonToClick and v.Visible then
-                    -- If your executor supports firesignal, use it for a cleaner click
-                    if firesignal then
-                        firesignal(v.MouseButton1Click)
-                    else
-                        v:Activate() -- Fallback for basic executors
+            local pGui = game.Players.LocalPlayer:FindFirstChild("PlayerGui")
+            if pGui then
+                -- Find all buttons named "Take" that are currently visible
+                for _, v in pairs(pGui:GetDescendants()) do
+                    if v:IsA("TextButton") and v.Name == ButtonName and v.Visible then
+                        -- Delta specific click method
+                        if firesignal then
+                            firesignal(v.MouseButton1Click)
+                        else
+                            v:Activate()
+                        end
                     end
                 end
             end
         end
     end
 end)
+
+print("Delta: Script Loaded Successfully!")
