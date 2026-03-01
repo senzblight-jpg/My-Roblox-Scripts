@@ -1,5 +1,5 @@
--- [[ BLOXBURG AUTO-TAKE: Z-KEYBIND EDITION ]]
-print("Delta: Injecting Z-Keybind Loader...")
+-- [[ BLOXBURG RADIAL-CRACKER: CENTER-HIT EDITION ]]
+print("Delta: Injecting Center-Hit Loader...")
 
 local Player = game.Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
@@ -7,18 +7,19 @@ local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 
 -- 1. CLEANUP OLD SESSIONS
-if PlayerGui:FindFirstChild("ZBindRadialV4") then 
-    PlayerGui.ZBindRadialV4:Destroy() 
+local uiName = "ZBindRadialV5"
+if PlayerGui:FindFirstChild(uiName) then 
+    PlayerGui[uiName]:Destroy() 
 end
 
 -- 2. CONFIGURATION
 _G.AutoTakeActive = true
-local INTERACTION_DELAY = 0.8 -- Increased delay for slow-loading menus
+local INTERACTION_DELAY = 1.0 -- Slightly longer to ensure radial menu is stable
 local TOGGLE_KEY = Enum.KeyCode.Z
 
 -- 3. CREATE UI
 local sg = Instance.new("ScreenGui", PlayerGui)
-sg.Name = "ZBindRadialV4"
+sg.Name = uiName
 sg.ResetOnSpawn = false
 
 local btn = Instance.new("TextButton", sg)
@@ -31,18 +32,18 @@ btn.Font = Enum.Font.GothamBold
 btn.Draggable = true
 Instance.new("UICorner", btn)
 
--- 4. TOGGLE FUNCTION (Button & Keybind)
+-- 4. TOGGLE FUNCTION
 local function toggle()
     _G.AutoTakeActive = not _G.AutoTakeActive
     btn.Text = _G.AutoTakeActive and "AUTO [Z]: ON" or "AUTO [Z]: OFF"
     btn.BackgroundColor3 = _G.AutoTakeActive and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(200, 50, 50)
-    print("Auto-Take Status: " .. tostring(_G.AutoTakeActive))
 end
 
 btn.MouseButton1Click:Connect(toggle)
 
+-- Force-check for Z key press
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == TOGGLE_KEY then
+    if input.KeyCode == TOGGLE_KEY then
         toggle()
     end
 end)
@@ -59,53 +60,37 @@ task.spawn(function()
                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
             end)
 
-            -- STEP B: PROPER DELAY (Waiting for menu to exist and animate)
+            -- STEP B: WAIT FOR RADIAL MENU
             task.wait(INTERACTION_DELAY)
 
-            -- STEP C: Coordinate-Based Click
-            local found = false
+            -- STEP C: SCAN AND CENTER-CLICK
             local guis = PlayerGui:GetDescendants()
             for i = 1, #guis do
                 local obj = guis[i]
-                -- Look for the Text "Take"
-                if (obj:IsA("TextLabel") or obj:IsA("TextButton")) and obj.Visible and obj.Text == "Take" then
+                
+                -- Check for "Take" or "Take Portion"
+                if (obj:IsA("TextLabel") or obj:IsA("TextButton")) and obj.Visible and (obj.Text == "Take" or obj.Text == "Take Portion") then
                     
+                    -- Calculate the EXACT center of the button
                     local absPos = obj.AbsolutePosition
                     local absSize = obj.AbsoluteSize
+                    
+                    -- We add a small offset to the Y axis to click lower into the button
                     local centerX = absPos.X + (absSize.X / 2)
-                    local centerY = absPos.Y + (absSize.Y / 2)
+                    local centerY = absPos.Y + (absSize.Y / 2) + 5 -- +5px downward adjustment
                     
                     pcall(function()
                         VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 1)
                         task.wait(0.05)
                         VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 1)
                     end)
-                    found = true
-                    break 
-                end
-            end
-            
-            -- If we didn't find "Take", try "Take Portion"
-            if not found then
-                for i = 1, #guis do
-                    local obj = guis[i]
-                    if (obj:IsA("TextLabel") or obj:IsA("TextButton")) and obj.Visible and obj.Text == "Take Portion" then
-                        local absPos = obj.AbsolutePosition
-                        local absSize = obj.AbsoluteSize
-                        local centerX = absPos.X + (absSize.X / 2)
-                        local centerY = absPos.Y + (absSize.Y / 2)
-                        
-                        pcall(function()
-                            VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 1)
-                            task.wait(0.05)
-                            VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 1)
-                        end)
-                        break
-                    end
+                    
+                    print("Clicked " .. obj.Text .. " at: " .. tostring(centerX) .. ", " .. tostring(centerY))
+                    break -- Stop scanning once clicked
                 end
             end
         end
     end
 end)
 
-print("Delta: Z-Toggle Script Active! Press Z to toggle.")
+print("Delta: Z-Toggle Center-Hit Active!")
