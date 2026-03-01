@@ -1,5 +1,5 @@
--- [[ BLOXBURG GOD-SPEED: V17 ]]
-print("Delta: Injecting God-Speed Build...")
+-- [[ BLOXBURG OVERCLOCK: V18 MAXIMUM SPEED ]]
+print("Delta: Injecting Overclock Build...")
 
 local Player = game:GetService("Players").LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
@@ -7,9 +7,9 @@ local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local RunService = game:GetService("RunService")
 
--- 1. CLEANUP
+-- 1. CLEANUP PREVIOUS SCRIPTS
 for _, old in pairs(PlayerGui:GetChildren()) do
-    if old.Name:find("Sync") or old.Name:find("Hyper") or old.Name:find("God") then
+    if old.Name:find("God") or old.Name:find("Sync") or old.Name:find("Overclock") then
         old:Destroy()
     end
 end
@@ -17,20 +17,20 @@ end
 -- 2. CONFIGURATION
 _G.AutoTakeActive = true
 local TOGGLE_KEY = Enum.KeyCode.Z
-local DEEP_Y_OFFSET = 75 -- Your perfect lower-click position
+local DEEP_Y_OFFSET = 75 
 
 -- 3. UI SETUP
 local sg = Instance.new("ScreenGui", PlayerGui)
-sg.Name = "GodSpeedV17"
+sg.Name = "OverclockV18"
 sg.ResetOnSpawn = false
 
 local btn = Instance.new("TextButton", sg)
 btn.Size = UDim2.new(0, 220, 0, 50)
-btn.Position = UDim2.new(0.5, -110, 0.05, 0)
-btn.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Red for Danger Speed
-btn.Text = "GOD-SPEED [Z]: ON"
-btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-btn.Font = Enum.Font.GothamBold
+btn.Position = UDim2.new(0.5, -110, 0.02, 0)
+btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+btn.Text = "OVERCLOCK [Z]: ON"
+btn.TextColor3 = Color3.fromRGB(255, 0, 0)
+btn.Font = Enum.Font.RobotoMono
 btn.Draggable = true
 Instance.new("UICorner", btn)
 
@@ -38,53 +38,43 @@ Instance.new("UICorner", btn)
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == TOGGLE_KEY then
         _G.AutoTakeActive = not _G.AutoTakeActive
-        btn.Text = _G.AutoTakeActive and "GOD-SPEED [Z]: ON" or "GOD-SPEED [Z]: OFF"
-        btn.BackgroundColor3 = _G.AutoTakeActive and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(50, 50, 50)
+        btn.Text = _G.AutoTakeActive and "OVERCLOCK [Z]: ON" or "OVERCLOCK [Z]: OFF"
+        btn.BackgroundColor3 = _G.AutoTakeActive and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(100, 100, 100)
     end
 end)
 
--- 5. THE GOD-SPEED ENGINE
+-- 5. THE OVERCLOCK ENGINE (No task.wait inside active loops)
 task.spawn(function()
     while true do
-        -- Frame-level wait (Fastest possible loop)
-        RunService.Heartbeat:Wait()
+        RunService.Heartbeat:Wait() -- Syncs with Physics
         
         if _G.AutoTakeActive then
-            -- STEP 1: TRIGGER E (No wait between down/up)
+            -- STEP 1: SPAM E (Multiple signals per frame)
             VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
             VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
 
-            -- STEP 2: FRAME-PERFECT SCAN
-            local clicked = false
-            local startTime = tick()
-            
-            -- Scan aggressively for 1 second
-            while tick() - startTime < 1 and not clicked and _G.AutoTakeActive do
-                local guis = PlayerGui:GetDescendants()
-                for i = 1, #guis do
-                    local obj = guis[i]
-                    if (obj:IsA("TextLabel") or obj:IsA("TextButton")) and obj.Visible and (obj.Text == "Take" or obj.Text == "Take Portion") then
-                        
-                        -- DEEP OFFSET CALCULATION
-                        local centerX = obj.AbsolutePosition.X + (obj.AbsoluteSize.X / 2)
-                        local centerY = obj.AbsolutePosition.Y + DEEP_Y_OFFSET 
-                        
-                        -- FRAME-PERFECT CLICK
+            -- STEP 2: PARALLEL SCAN (Checks all descendants simultaneously)
+            local guis = PlayerGui:GetDescendants()
+            for i = 1, #guis do
+                local obj = guis[i]
+                
+                -- Check for "Take" text instantly
+                if (obj:IsA("TextLabel") or obj:IsA("TextButton")) and obj.Visible and (obj.Text == "Take" or obj.Text == "Take Portion") then
+                    
+                    local centerX = obj.AbsolutePosition.X + (obj.AbsoluteSize.X / 2)
+                    local centerY = obj.AbsolutePosition.Y + DEEP_Y_OFFSET 
+                    
+                    -- STEP 3: BURST CLICK (Sends 3 clicks in a single frame to override lag)
+                    for _ = 1, 3 do
                         VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 1)
                         VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 1)
-                        
-                        clicked = true
-                        break
                     end
+                    
+                    break -- Move to next E-cycle immediately
                 end
-                -- Don't wait at all between scans until found
-                if not clicked then RunService.RenderStepped:Wait() end
             end
-            
-            -- STEP 3: MINIMAL COOLDOWN (Needed so Roblox doesn't kick you)
-            task.wait(0.01)
         end
     end
 end)
 
-print("Delta: God-Speed V17 Active. Use Z to stop.")
+print("Delta: Overclock V18 Active. Stand near food and hold Z if needed.")
