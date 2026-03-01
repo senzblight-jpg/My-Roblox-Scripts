@@ -1,20 +1,17 @@
--- [[ BLOXBURG HYPER-FAST: NO-SKIP EDITION ]]
-print("Delta: Injecting Hyper-Fast Sync Build...")
+-- [[ BLOXBURG ZERO-DELAY: CHAIN INTERACT EDITION ]]
+print("Delta: Injecting Zero-Delay Chain Build...")
 
 local Player = game:GetService("Players").LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 
--- 1. CLEANUP
-local function cleanup()
-    for _, old in pairs(PlayerGui:GetChildren()) do
-        if old.Name:find("NoSkip") or old.Name:find("Radial") or old.Name:find("Take") then
-            old:Destroy()
-        end
+-- 1. FORCE CLEANUP
+for _, old in pairs(PlayerGui:GetChildren()) do
+    if old.Name:find("Fast") or old.Name:find("Radial") or old.Name:find("NoSkip") then
+        old:Destroy()
     end
 end
-cleanup()
 
 -- 2. CONFIGURATION
 _G.AutoTakeActive = true
@@ -23,15 +20,15 @@ local DEEP_Y_OFFSET = 65
 
 -- 3. UI SETUP
 local sg = Instance.new("ScreenGui", PlayerGui)
-sg.Name = "HyperFastV12"
+sg.Name = "ZeroDelayV13"
 sg.ResetOnSpawn = false
 
 local btn = Instance.new("TextButton", sg)
 btn.Size = UDim2.new(0, 200, 0, 50)
 btn.Position = UDim2.new(0.5, -100, 0.05, 0)
-btn.BackgroundColor3 = Color3.fromRGB(255, 85, 0) -- Orange for Hyper-Fast
-btn.Text = "HYPER-FAST [Z]: ON"
-btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+btn.BackgroundColor3 = Color3.fromRGB(0, 255, 150) -- Neon Green
+btn.Text = "ZERO-DELAY [Z]: ON"
+btn.TextColor3 = Color3.fromRGB(0, 0, 0)
 btn.Font = Enum.Font.GothamBold
 btn.Draggable = true
 Instance.new("UICorner", btn)
@@ -40,51 +37,52 @@ Instance.new("UICorner", btn)
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == TOGGLE_KEY then
         _G.AutoTakeActive = not _G.AutoTakeActive
-        btn.Text = _G.AutoTakeActive and "HYPER-FAST [Z]: ON" or "HYPER-FAST [Z]: OFF"
-        btn.BackgroundColor3 = _G.AutoTakeActive and Color3.fromRGB(255, 85, 0) or Color3.fromRGB(200, 50, 50)
+        btn.Text = _G.AutoTakeActive and "ZERO-DELAY [Z]: ON" or "ZERO-DELAY [Z]: OFF"
+        btn.BackgroundColor3 = _G.AutoTakeActive and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(200, 50, 50)
     end
 end)
 
--- 5. THE HYPER-SPEED ENGINE
+-- 5. THE CHAIN ENGINE (Zero Delay)
 task.spawn(function()
     while true do
-        task.wait(0.1) -- Reduced main loop delay for faster re-triggers
+        task.wait() -- Run at engine speed (fastest possible)
+        
         if _G.AutoTakeActive then
-            -- STEP 1: INSTANT E PRESS
+            -- STEP 1: TRIGGER INTERACT (E)
             VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
-            task.wait(0.01) -- Minimum delay for engine registration
+            task.wait() -- Smallest possible tick
             VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
 
-            -- STEP 2: HIGH-FREQUENCY SCAN (Locked until click or timeout)
+            -- STEP 2: HYPER-SCAN (Zero Delay Lock)
             local startTime = tick()
             local clicked = false
             
-            -- Scan every 0.05 seconds (20 times per second)
-            while tick() - startTime < 2 and not clicked and _G.AutoTakeActive do
-                local guis = PlayerGui:GetDescendants()
-                for i = 1, #guis do
-                    local obj = guis[i]
+            -- Scan continuously until the button is found or 1.5s passes
+            while tick() - startTime < 1.5 and not clicked and _G.AutoTakeActive do
+                local allGuis = PlayerGui:GetDescendants()
+                for i = 1, #allGuis do
+                    local obj = allGuis[i]
                     if (obj:IsA("TextLabel") or obj:IsA("TextButton")) and obj.Visible and (obj.Text == "Take" or obj.Text == "Take Portion") then
                         
                         local centerX = obj.AbsolutePosition.X + (obj.AbsoluteSize.X / 2)
                         local centerY = obj.AbsolutePosition.Y + DEEP_Y_OFFSET 
                         
-                        -- RAPID CLICK
+                        -- INSTANT CLICK
                         VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 1)
-                        task.wait() -- Minimal frame wait
                         VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 1)
                         
                         clicked = true
+                        -- No task.wait here = Instant loop restart
                         break
                     end
                 end
-                task.wait(0.05) -- Hyper-fast scan frequency
+                -- Very tiny wait to prevent crashing but keep it "instant"
+                RunService.Heartbeat:Wait() 
             end
             
-            -- Short rest to let the "Take" animation finish before next "E"
-            task.wait(0.2)
+            -- REMOVED task.wait(0.5) to ensure zero delay before next "E"
         end
     end
 end)
 
-print("Delta: Hyper-Fast Build Active. Loop speed maximized.")
+print("Delta: Zero-Delay Build Active. Chain speed is maximum.")
