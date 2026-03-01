@@ -1,74 +1,73 @@
--- [[ Bloxburg Auto-Take for Delta ]]
-print("Delta: Initializing Bloxburg Script...")
+-- [[ Bloxburg Auto-Take Toggle for Delta ]]
+print("Delta: Injecting Toggle UI...")
 
 local Player = game.Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
--- Global variable to track state
+-- State variable
 _G.AutoTakeEnabled = false
 
--- [[ UI CONSTRUCTION ]]
--- Deletes old UI if it exists to prevent stacking
-if PlayerGui:FindFirstChild("BloxburgAutomation") then
-    PlayerGui.BloxburgAutomation:Destroy()
+-- [[ UI CLEANUP ]]
+if PlayerGui:FindFirstChild("BloxburgToggleUI") then
+    PlayerGui.BloxburgToggleUI:Destroy()
 end
 
+-- [[ CREATE THE UI ]]
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "BloxburgAutomation"
+ScreenGui.Name = "BloxburgToggleUI"
 ScreenGui.Parent = PlayerGui
 ScreenGui.ResetOnSpawn = false 
 
 local MainButton = Instance.new("TextButton")
-MainButton.Name = "ToggleButton"
 MainButton.Parent = ScreenGui
-MainButton.Size = UDim2.new(0, 150, 0, 50)
-MainButton.Position = UDim2.new(0.5, -75, 0.05, 0) -- Top Center
-MainButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0) -- Initial Red
-MainButton.Text = "Auto-Take: OFF"
+MainButton.Size = UDim2.new(0, 160, 0, 50)
+MainButton.Position = UDim2.new(0.5, -80, 0.1, 0) -- Top of screen
+MainButton.BackgroundColor3 = Color3.fromRGB(255, 65, 65) -- Start Red
+MainButton.Text = "AUTO-TAKE: OFF"
 MainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 MainButton.Font = Enum.Font.GothamBold
-MainButton.TextSize = 16
-MainButton.Draggable = true -- So you can move it on mobile
+MainButton.TextSize = 14
+MainButton.Draggable = true 
 
--- Rounded corners for a cleaner look
+-- Add rounded corners
 local Corner = Instance.new("UICorner")
-Corner.CornerRadius = ToolPunch.new(0, 8)
+Corner.CornerRadius = UDim.new(0, 10)
 Corner.Parent = MainButton
 
--- [[ TOGGLE FUNCTIONALITY ]]
+-- [[ TOGGLE LOGIC ]]
 MainButton.MouseButton1Click:Connect(function()
+    -- This flips the value: if it's true, it becomes false. If false, it becomes true.
     _G.AutoTakeEnabled = not _G.AutoTakeEnabled
     
     if _G.AutoTakeEnabled then
-        MainButton.Text = "Auto-Take: ON"
-        MainButton.BackgroundColor3 = Color3.fromRGB(0, 180, 80) -- Green
-        print("Auto-Take Enabled")
+        -- Visuals for ON
+        MainButton.Text = "AUTO-TAKE: ON"
+        MainButton.BackgroundColor3 = Color3.fromRGB(65, 255, 65) -- Green
+        print("Status: Auto-Take is now ACTIVE")
     else
-        MainButton.Text = "Auto-Take: OFF"
-        MainButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0) -- Red
-        print("Auto-Take Disabled")
+        -- Visuals for OFF
+        MainButton.Text = "AUTO-TAKE: OFF"
+        MainButton.BackgroundColor3 = Color3.fromRGB(255, 65, 65) -- Red
+        print("Status: Auto-Take is now DISABLED")
     end
 end)
 
--- [[ AUTO-CLICK LOGIC ]]
+-- [[ AUTO-CLICK LOOP ]]
 task.spawn(function()
-    while task.wait(0.2) do -- Checks 5 times per second
+    while task.wait(0.2) do
         if _G.AutoTakeEnabled then
-            -- Bloxburg uses "BillboardGuis" or "ScreenGuis" for interactions
+            -- Scan for the "Take" button in Bloxburg's menus
             for _, v in pairs(PlayerGui:GetDescendants()) do
-                -- Check if the element is a button/label and contains the text "Take"
                 if (v:IsA("TextButton") or v:IsA("TextLabel")) and v.Visible then
                     if v.Text == "Take" or v.Text:find("Take") then
+                        -- Identify the clickable button
+                        local targetBtn = v:IsA("TextButton") and v or v:FindFirstAncestorOfClass("TextButton")
                         
-                        -- Find the actual clickable button if we are looking at a label
-                        local target = v:IsA("TextButton") and v or v:FindFirstAncestorOfClass("TextButton")
-                        
-                        if target then
-                            -- Delta's preferred way to simulate a click
+                        if targetBtn then
                             if firesignal then
-                                firesignal(target.MouseButton1Click)
+                                firesignal(targetBtn.MouseButton1Click)
                             else
-                                target:Activate()
+                                targetBtn:Activate()
                             end
                         end
                     end
@@ -78,4 +77,4 @@ task.spawn(function()
     end
 end)
 
-print("Delta: Script Fully Loaded!")
+print("Delta: Toggle Script Loaded! Click the Red button to start.")
