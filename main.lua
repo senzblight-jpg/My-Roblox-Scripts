@@ -1,79 +1,90 @@
--- [[ BLOXBURG ULTIMATE AUTO-TAKE ]]
--- Optimized for Delta Mobile
-print("Delta: Starting Fresh Build...")
+-- [[ Bloxburg Ultimate Auto-Take - Delta Optimized ]]
+print("Delta: Injecting Zero-Fail Build...")
 
--- 1. Configuration
-local TargetText = "Take" -- The text we are hunting for
-_G.AutoTakeActive = true  -- Starts ON as requested
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+local RunService = game:GetService("RunService")
 
--- 2. Cleanup existing UI to avoid glitching
-local old = game.Players.LocalPlayer.PlayerGui:FindFirstChild("BloxburgHelper")
-if old then old:Destroy() end
+-- Configuration
+_G.AutoTakeEnabled = true -- Starts ON
 
--- 3. Create the UI
+-- [[ UI SETUP ]]
+if PlayerGui:FindFirstChild("BloxburgFinalUI") then
+    PlayerGui.BloxburgFinalUI:Destroy()
+end
+
 local sg = Instance.new("ScreenGui")
-sg.Name = "BloxburgHelper"
-sg.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+sg.Name = "BloxburgFinalUI"
+sg.Parent = PlayerGui
 sg.ResetOnSpawn = false
 
 local btn = Instance.new("TextButton")
-btn.Name = "Toggle"
 btn.Parent = sg
-btn.Size = UDim2.new(0, 150, 0, 45)
-btn.Position = UDim2.new(0.5, -75, 0.15, 0)
-btn.BackgroundColor3 = Color3.fromRGB(0, 200, 100) -- Starts Green (ON)
+btn.Size = UDim2.new(0, 160, 0, 50)
+btn.Position = UDim2.new(0.5, -80, 0.2, 0)
+btn.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
 btn.Text = "AUTO-TAKE: ON"
 btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 btn.Font = Enum.Font.SourceSansBold
-btn.TextSize = 16
-btn.Draggable = true -- Essential for mobile/Delta users
+btn.TextSize = 18
+btn.Active = true
+btn.Draggable = true
 
--- Add a nice rounded corner
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
-corner.Parent = btn
+Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
 
--- 4. Toggle Function
+-- [[ TOGGLE LOGIC ]]
 btn.MouseButton1Click:Connect(function()
-    _G.AutoTakeActive = not _G.AutoTakeActive
-    if _G.AutoTakeActive then
+    _G.AutoTakeEnabled = not _G.AutoTakeEnabled
+    if _G.AutoTakeEnabled then
         btn.Text = "AUTO-TAKE: ON"
-        btn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+        btn.BackgroundColor3 = Color3.fromRGB(0, 180, 100)
     else
         btn.Text = "AUTO-TAKE: OFF"
-        btn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        btn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
     end
 end)
 
--- 5. The "Brute Force" Logic
--- This loop checks for BOTH UI buttons and ProximityPrompts
-task.spawn(function()
-    while task.wait(0.2) do -- Fast enough to be "auto", slow enough to not crash
-        if _G.AutoTakeActive then
-            -- METHOD A: Search UI (For the menu you see in your image)
-            local pGui = game.Players.LocalPlayer:FindFirstChild("PlayerGui")
-            if pGui then
-                for _, v in pairs(pGui:GetDescendants()) do
-                    if v:IsA("TextButton") and v.Visible and (v.Text:find(TargetText) or v.Name:find(TargetText)) then
-                        -- Delta specific click triggers
-                        pcall(function()
-                            if firesignal then
-                                firesignal(v.MouseButton1Click)
-                            end
-                            v:Activate()
-                        end)
+-- [[ THE INTERACTION HOOK ]]
+-- This version searches for the Bloxburg "ActionMenu" which is unique
+RunService.RenderStepped:Connect(function()
+    if _G.AutoTakeEnabled then
+        -- Bloxburg creates a 'Menu' or 'ActionMenu' object when you press E
+        for _, gui in pairs(PlayerGui:GetChildren()) do
+            if gui:IsA("ScreenGui") and (gui.Name:find("Menu") or gui.Name == "ActionMenu") then
+                for _, element in pairs(gui:GetDescendants()) do
+                    -- Search for the Text "Take"
+                    if (element:IsA("TextLabel") or element:IsA("TextButton")) and 
+                       (element.Text == "Take" or element.Text:find("Take")) then
+                        
+                        -- Find the button to click
+                        local clicker = element:IsA("TextButton") and element or element:FindFirstAncestorOfClass("TextButton")
+                        
+                        if clicker then
+                            -- Force the click
+                            pcall(function()
+                                if firesignal then
+                                    firesignal(clicker.MouseButton1Click)
+                                    firesignal(clicker.MouseButton1Down)
+                                end
+                                clicker:Activate()
+                            end)
+                        end
                     end
                 end
             end
-            
-            -- METHOD B: Search for ProximityPrompts (In case Bloxburg updated)
-            for _, prompt in pairs(game:GetService("ProximityPromptService"):GetProximityPrompts()) do
-                if prompt.ActionText:find(TargetText) or prompt.ObjectText:find(TargetText) then
-                    fireproximityprompt(prompt)
-                end
+        end
+        
+        -- Fallback: Check for generic buttons named 'Option' or 'Action'
+        for _, v in pairs(PlayerGui:GetDescendants()) do
+            if v:IsA("TextButton") and v.Visible and v.Text == "Take" then
+                pcall(function()
+                    if firesignal then firesignal(v.MouseButton1Click) end
+                    v:Activate()
+                end)
             end
         end
     end
 end)
 
-print("Delta: Bloxburg Script Ready & Active!")
+print("Delta: Loaded. Press 'E' on food to see it work!")
