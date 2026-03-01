@@ -1,4 +1,3 @@
--- [[ BLOXBURG SEQUENTIAL-TAKE: RE-SYNCED EDITION ]]
 print("Delta: Injecting Optimized Sequential Sync Build...")
 
 local Player = game:GetService("Players").LocalPlayer
@@ -37,7 +36,7 @@ btn.Font = Enum.Font.GothamBold
 btn.ClipsDescendants = true
 
 local corner = Instance.new("UICorner", btn)
-corner.CornerRadius = ToolPunchout.new(0, 8)
+corner.CornerRadius = UDim.new(0, 8) -- Fixed this line
 
 -- 4. TOGGLE LOGIC
 UserInputService.InputBegan:Connect(function(input, processed)
@@ -63,14 +62,14 @@ task.spawn(function()
             local startTime = tick()
             local clicked = false
             
-            -- Scan for 2 seconds (3 is often too slow for high-efficiency farming)
+            -- Scan for 2 seconds (or less if successful)
             while tick() - startTime < 2 and not clicked and _G.AutoTakeActive do
                 local foundGui = nil
                 
-                -- Optimized search: Bloxburg GUIs are usually in specific folders
+                -- Optimized search for relevant GUIs
                 for _, obj in ipairs(PlayerGui:GetDescendants()) do
                     if obj:IsA("TextLabel") or obj:IsA("TextButton") then
-                        if obj.Visible and (obj.Text:find("Take") or obj.Text:find("Portion")) then
+                        if obj.Visible and (string.find(obj.Text, "Take") or string.find(obj.Text, "Portion")) then
                             foundGui = obj
                             break
                         end
@@ -81,18 +80,18 @@ task.spawn(function()
                     -- Calculate the center of the button on screen
                     local absPos = foundGui.AbsolutePosition
                     local absSize = foundGui.AbsoluteSize
-                    -- Add CLICK_OFFSET to account for the Roblox TopBar
                     local centerX = absPos.X + (absSize.X / 2)
                     local centerY = absPos.Y + (absSize.Y / 2) + CLICK_OFFSET.Y
-                    
+
+                    -- Send mouse click at the calculated position
                     VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 1)
                     task.wait(0.03)
                     VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 1)
-                    
+
                     clicked = true
                     print("Success: Item Taken.")
                 end
-                task.wait(0.1) 
+                task.wait(0.1)
             end
         end
     end
