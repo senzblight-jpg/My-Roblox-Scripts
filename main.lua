@@ -1,67 +1,74 @@
--- [[ BLURRY'S BLOXBURG AUTO-TAKE ]]
+-- [[ Bloxburg Auto-Take for Delta ]]
 print("Delta: Initializing Bloxburg Script...")
 
--- [[ SETTINGS ]]
-local TargetText = "Take" -- We will look for the word "Take" inside the button
+local Player = game.Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+-- Global variable to track state
 _G.AutoTakeEnabled = false
 
--- [[ UI CLEANUP ]]
-local oldGui = game.Players.LocalPlayer.PlayerGui:FindFirstChild("BloxburgAutoTake")
-if oldGui then oldGui:Destroy() end
+-- [[ UI CONSTRUCTION ]]
+-- Deletes old UI if it exists to prevent stacking
+if PlayerGui:FindFirstChild("BloxburgAutomation") then
+    PlayerGui.BloxburgAutomation:Destroy()
+end
 
--- [[ CREATE DELTA UI ]]
-local sg = Instance.new("ScreenGui")
-sg.Name = "BloxburgAutoTake"
-sg.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-sg.ResetOnSpawn = false 
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BloxburgAutomation"
+ScreenGui.Parent = PlayerGui
+ScreenGui.ResetOnSpawn = false 
 
-local btn = Instance.new("TextButton")
-btn.Size = UDim2.new(0, 140, 0, 45)
-btn.Position = UDim2.new(0.5, -70, 0.05, 0) -- Near the top of the screen
-btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-btn.BorderSizePixel = 2
-btn.Text = "Auto-Take: OFF"
-btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-btn.Font = Enum.Font.SourceSansBold
-btn.TextSize = 18
-btn.Parent = sg
-btn.Active = true
-btn.Draggable = true 
+local MainButton = Instance.new("TextButton")
+MainButton.Name = "ToggleButton"
+MainButton.Parent = ScreenGui
+MainButton.Size = UDim2.new(0, 150, 0, 50)
+MainButton.Position = UDim2.new(0.5, -75, 0.05, 0) -- Top Center
+MainButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0) -- Initial Red
+MainButton.Text = "Auto-Take: OFF"
+MainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MainButton.Font = Enum.Font.GothamBold
+MainButton.TextSize = 16
+MainButton.Draggable = true -- So you can move it on mobile
 
--- [[ TOGGLE LOGIC ]]
-btn.MouseButton1Click:Connect(function()
+-- Rounded corners for a cleaner look
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = ToolPunch.new(0, 8)
+Corner.Parent = MainButton
+
+-- [[ TOGGLE FUNCTIONALITY ]]
+MainButton.MouseButton1Click:Connect(function()
     _G.AutoTakeEnabled = not _G.AutoTakeEnabled
+    
     if _G.AutoTakeEnabled then
-        btn.Text = "Auto-Take: ON"
-        btn.BackgroundColor3 = Color3.fromRGB(0, 180, 0) -- Green
-        print("Bloxburg Auto-Take: Active")
+        MainButton.Text = "Auto-Take: ON"
+        MainButton.BackgroundColor3 = Color3.fromRGB(0, 180, 80) -- Green
+        print("Auto-Take Enabled")
     else
-        btn.Text = "Auto-Take: OFF"
-        btn.BackgroundColor3 = Color3.fromRGB(180, 0, 0) -- Red
-        print("Bloxburg Auto-Take: Disabled")
+        MainButton.Text = "Auto-Take: OFF"
+        MainButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0) -- Red
+        print("Auto-Take Disabled")
     end
 end)
 
--- [[ SCANNER LOGIC ]]
+-- [[ AUTO-CLICK LOGIC ]]
 task.spawn(function()
-    while task.wait(0.3) do -- Slightly slower to prevent Bloxburg from lagging/kicking
+    while task.wait(0.2) do -- Checks 5 times per second
         if _G.AutoTakeEnabled then
-            local pGui = game.Players.LocalPlayer:FindFirstChild("PlayerGui")
-            if pGui then
-                -- Search specifically for the Bloxburg Interaction Menu
-                for _, v in pairs(pGui:GetDescendants()) do
-                    -- In Bloxburg, the button text is what matters
-                    if v:IsA("TextLabel") or v:IsA("TextButton") then
-                        if v.Text == TargetText and v.Visible then
-                            -- We found the 'Take' text, now find its parent button to click
-                            local clickable = v:IsA("TextButton") and v or v:FindFirstAncestorOfClass("TextButton")
-                            
-                            if clickable then
-                                if firesignal then
-                                    firesignal(clickable.MouseButton1Click)
-                                else
-                                    clickable:Activate()
-                                end
+            -- Bloxburg uses "BillboardGuis" or "ScreenGuis" for interactions
+            for _, v in pairs(PlayerGui:GetDescendants()) do
+                -- Check if the element is a button/label and contains the text "Take"
+                if (v:IsA("TextButton") or v:IsA("TextLabel")) and v.Visible then
+                    if v.Text == "Take" or v.Text:find("Take") then
+                        
+                        -- Find the actual clickable button if we are looking at a label
+                        local target = v:IsA("TextButton") and v or v:FindFirstAncestorOfClass("TextButton")
+                        
+                        if target then
+                            -- Delta's preferred way to simulate a click
+                            if firesignal then
+                                firesignal(target.MouseButton1Click)
+                            else
+                                target:Activate()
                             end
                         end
                     end
@@ -71,4 +78,4 @@ task.spawn(function()
     end
 end)
 
-print("Delta: Bloxburg Script Ready!")
+print("Delta: Script Fully Loaded!")
