@@ -1,70 +1,79 @@
--- [[ Bloxburg Auto-Take - Starts ON ]]
-local Player = game.Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui")
+-- [[ BLOXBURG ULTIMATE AUTO-TAKE ]]
+-- Optimized for Delta Mobile
+print("Delta: Starting Fresh Build...")
 
--- Set starting state to TRUE
-local enabled = true 
+-- 1. Configuration
+local TargetText = "Take" -- The text we are hunting for
+_G.AutoTakeActive = true  -- Starts ON as requested
 
--- [[ UI SETUP ]]
-if PlayerGui:FindFirstChild("ForceToggleUI") then
-    PlayerGui.ForceToggleUI:Destroy()
-end
+-- 2. Cleanup existing UI to avoid glitching
+local old = game.Players.LocalPlayer.PlayerGui:FindFirstChild("BloxburgHelper")
+if old then old:Destroy() end
 
+-- 3. Create the UI
 local sg = Instance.new("ScreenGui")
-sg.Name = "ForceToggleUI"
-sg.Parent = PlayerGui
+sg.Name = "BloxburgHelper"
+sg.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 sg.ResetOnSpawn = false
 
 local btn = Instance.new("TextButton")
+btn.Name = "Toggle"
 btn.Parent = sg
-btn.Size = UDim2.new(0, 160, 0, 50)
-btn.Position = UDim2.new(0.5, -80, 0.15, 0)
--- Start with Green color and ON text
-btn.BackgroundColor3 = Color3.fromRGB(0, 200, 0) 
+btn.Size = UDim2.new(0, 150, 0, 45)
+btn.Position = UDim2.new(0.5, -75, 0.15, 0)
+btn.BackgroundColor3 = Color3.fromRGB(0, 200, 100) -- Starts Green (ON)
 btn.Text = "AUTO-TAKE: ON"
 btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 btn.Font = Enum.Font.SourceSansBold
-btn.TextSize = 18
-btn.Active = true
-btn.Draggable = true
+btn.TextSize = 16
+btn.Draggable = true -- Essential for mobile/Delta users
 
-Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
+-- Add a nice rounded corner
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = btn
 
--- [[ THE TOGGLE LOGIC ]]
+-- 4. Toggle Function
 btn.MouseButton1Click:Connect(function()
-    enabled = not enabled 
-    
-    if enabled then
+    _G.AutoTakeActive = not _G.AutoTakeActive
+    if _G.AutoTakeActive then
         btn.Text = "AUTO-TAKE: ON"
-        btn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-        print("Delta: Auto-Take Enabled")
+        btn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
     else
         btn.Text = "AUTO-TAKE: OFF"
-        btn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-        print("Delta: Auto-Take Disabled")
+        btn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
     end
 end)
 
--- [[ THE ACTION LOOP ]]
+-- 5. The "Brute Force" Logic
+-- This loop checks for BOTH UI buttons and ProximityPrompts
 task.spawn(function()
-    while task.wait(0.3) do
-        if enabled then
-            for _, v in pairs(PlayerGui:GetDescendants()) do
-                if (v:IsA("TextLabel") or v:IsA("TextButton")) and v.Visible then
-                    -- Bloxburg usually uses "Take" or "Take Portion"
-                    if v.Text == "Take" or v.Text == "Take Portion" then
-                        local clickTarget = v:IsA("TextButton") and v or v:FindFirstAncestorOfClass("TextButton")
-                        if clickTarget then
+    while task.wait(0.2) do -- Fast enough to be "auto", slow enough to not crash
+        if _G.AutoTakeActive then
+            -- METHOD A: Search UI (For the menu you see in your image)
+            local pGui = game.Players.LocalPlayer:FindFirstChild("PlayerGui")
+            if pGui then
+                for _, v in pairs(pGui:GetDescendants()) do
+                    if v:IsA("TextButton") and v.Visible and (v.Text:find(TargetText) or v.Name:find(TargetText)) then
+                        -- Delta specific click triggers
+                        pcall(function()
                             if firesignal then
-                                firesignal(clickTarget.MouseButton1Click)
+                                firesignal(v.MouseButton1Click)
                             end
-                            clickTarget:Activate()
-                        end
+                            v:Activate()
+                        end)
                     end
+                end
+            end
+            
+            -- METHOD B: Search for ProximityPrompts (In case Bloxburg updated)
+            for _, prompt in pairs(game:GetService("ProximityPromptService"):GetProximityPrompts()) do
+                if prompt.ActionText:find(TargetText) or prompt.ObjectText:find(TargetText) then
+                    fireproximityprompt(prompt)
                 end
             end
         end
     end
 end)
 
-print("Delta: Script Loaded and ACTIVE!")
+print("Delta: Bloxburg Script Ready & Active!")
