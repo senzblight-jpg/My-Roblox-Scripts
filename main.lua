@@ -1,75 +1,79 @@
--- [[ BLOXBURG ULTIMATE AUTO-TAKE - FOOL PROOF ]]
-print("Delta: Loading Bloxburg Specialist Script...")
+-- [[ BLOXBURG RADIAL AUTO-TAKE ]]
+-- Specifically designed to click floating World-UI
+print("Delta: Initializing World-Scanner...")
 
 local Player = game.Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 local RunService = game:GetService("RunService")
 
--- State Variable
+-- State starts as ON
 _G.AutoTakeActive = true
 
 -- [[ UI CLEANUP ]]
-if PlayerGui:FindFirstChild("BloxburgSpecialist") then
-    PlayerGui.BloxburgSpecialist:Destroy()
+if PlayerGui:FindFirstChild("BloxburgRadialFix") then
+    PlayerGui.BloxburgRadialFix:Destroy()
 end
 
--- [[ CREATE MENU ]]
+-- [[ TOGGLE UI ]]
 local sg = Instance.new("ScreenGui")
-sg.Name = "BloxburgSpecialist"
+sg.Name = "BloxburgRadialFix"
 sg.Parent = PlayerGui
 sg.ResetOnSpawn = false
 
 local btn = Instance.new("TextButton")
 btn.Parent = sg
-btn.Size = UDim2.new(0, 150, 0, 45)
-btn.Position = UDim2.new(0.5, -75, 0.15, 0)
-btn.BackgroundColor3 = Color3.fromRGB(0, 210, 100) -- Start Green
+btn.Size = UDim2.new(0, 160, 0, 50)
+btn.Position = UDim2.new(0.5, -80, 0.15, 0)
+btn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
 btn.Text = "AUTO-TAKE: ON"
 btn.TextColor3 = Color3.fromRGB(255, 255, 255)
 btn.Font = Enum.Font.GothamBold
 btn.TextSize = 14
 btn.Draggable = true
+Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
 
-local corner = Instance.new("UICorner", btn)
-corner.CornerRadius = UDim.new(0, 10)
-
--- [[ TOGGLE LOGIC ]]
 btn.MouseButton1Click:Connect(function()
     _G.AutoTakeActive = not _G.AutoTakeActive
-    if _G.AutoTakeActive then
-        btn.Text = "AUTO-TAKE: ON"
-        btn.BackgroundColor3 = Color3.fromRGB(0, 210, 100)
-    else
-        btn.Text = "AUTO-TAKE: OFF"
-        btn.BackgroundColor3 = Color3.fromRGB(210, 50, 50)
-    end
+    btn.Text = _G.AutoTakeActive and "AUTO-TAKE: ON" or "AUTO-TAKE: OFF"
+    btn.BackgroundColor3 = _G.AutoTakeActive and Color3.fromRGB(0, 200, 100) or Color3.fromRGB(200, 50, 50)
 end)
 
--- [[ THE FOOL-PROOF SCANNER ]]
--- This checks every frame for Bloxburg's specific menu structure
-RunService.RenderStepped:Connect(function()
+-- [[ THE RADIAL SCANNER ]]
+RunService.Heartbeat:Connect(function()
     if _G.AutoTakeActive then
-        -- 1. Search for Bloxburg's ActionMenu or circular guis
+        -- METHOD 1: Scan Workspace (For BillboardGuis on the food)
+        for _, obj in pairs(game.Workspace:GetDescendants()) do
+            if obj:IsA("BillboardGui") or obj:IsA("SurfaceGui") then
+                for _, child in pairs(obj:GetDescendants()) do
+                    if (child:IsA("TextLabel") or child:IsA("TextButton")) and child.Visible then
+                        if child.Text == "Take" or child.Text == "Take Portion" then
+                            local clicker = child:IsA("TextButton") and child or child:FindFirstAncestorOfClass("TextButton")
+                            if clicker then
+                                pcall(function()
+                                    -- Force interactions
+                                    if firesignal then
+                                        firesignal(clicker.MouseButton1Click)
+                                        firesignal(clicker.Activated)
+                                    end
+                                    clicker:Activate()
+                                end)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        -- METHOD 2: Scan PlayerGui (For the radial overlay)
         for _, gui in pairs(PlayerGui:GetChildren()) do
-            -- Bloxburg menus usually have 'Action' or 'Menu' in their name
-            if gui:IsA("ScreenGui") or gui:IsA("BillboardGui") then
-                for _, obj in pairs(gui:GetDescendants()) do
-                    -- Find the Text "Take" (case-sensitive to avoid glitches)
-                    if (obj:IsA("TextLabel") or obj:IsA("TextButton")) and (obj.Text == "Take" or obj.Text == "Take Portion") then
-                        
-                        -- Find the button that owns this text
-                        local button = obj:IsA("TextButton") and obj or obj:FindFirstAncestorOfClass("TextButton")
-                        
-                        if button and button.Visible then
-                            -- Force a physical interaction
+            if gui:IsA("ScreenGui") and gui.Enabled then
+                for _, element in pairs(gui:GetDescendants()) do
+                    if (element:IsA("TextLabel") or element:IsA("TextButton")) and element.Text == "Take" then
+                        local target = element:IsA("TextButton") and element or element:FindFirstAncestorOfClass("TextButton")
+                        if target then
                             pcall(function()
-                                -- Trigger for Delta/Mobile executors
-                                if firesignal then
-                                    firesignal(button.MouseButton1Click)
-                                    firesignal(button.MouseButton1Down)
-                                    firesignal(button.Activated)
-                                end
-                                button:Activate()
+                                if firesignal then firesignal(target.MouseButton1Click) end
+                                target:Activate()
                             end)
                         end
                     end
@@ -79,4 +83,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("Delta: Script Active! Walk to food and press E.")
+print("Delta: Scanner Active. Walk to food and press E!")
